@@ -19,7 +19,15 @@ class Demo:
         await self.light.get_info()
 
         print(f"Light Name: {self.light.name}")
+        print(f"Model: {self.light._model}")
+        print(f"Is On: {self.light.is_on}")
+        print(f"Brightness: {self.light.brightness}")
         print(f"Hue: {self.light.hue}")
+        print(f"Saturation: {self.light.saturation}")
+        print(f"Effects: {self.light.effects_values}")
+        print(f"Selected Effect: {self.light.effect}")
+        print(f"Pixel Count: {self.light.pixel_count}")
+        print(f"Pixels: {self.light.pixels}")
 
         await self.light.turn_off()
         sleep(0.5)
