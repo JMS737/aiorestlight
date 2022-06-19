@@ -31,10 +31,10 @@ class RestLight:
         port: int = 25741,
     ) -> None:
         """Initialise the client."""
-        self._session = session
-        self._device_id = device_id
-        self._host = host
-        self._port = port
+        self._session: ClientSession = session
+        self._device_id: int = device_id
+        self._host:str = host
+        self._port:int = port
 
         self._name: str
         self._model: str
@@ -44,7 +44,7 @@ class RestLight:
         self._saturation: int
         self._pixel_count: int
         self._pixels: list[Pixel]
-        self._effects_list: list[str]
+        self._effects_values: list[str]
         self._effect: str
 
     @property
@@ -89,14 +89,14 @@ class RestLight:
         return self._saturation
 
     @property
-    def effects_list(self) -> list[str]:
+    def effects_values(self) -> list[str]:
         """Return the list of supported effects."""
-        return self._effects_list
+        return self._effects_values
 
     @property
     def effect(self) -> str:
         """Return the selected effect."""
-        return self._hue
+        return self._effect
 
     @property
     def pixel_count(self) -> int:
@@ -109,17 +109,17 @@ class RestLight:
         return self._pixels
 
     async def _request(
-        self, method: str, path: str, data: dict | None = None
+        self, method: str, path: str, data: dict | None = None, headers: dict | None = None
     ) -> ClientResponse:
         url = f"{self._api_url}/{self._device_id}/{path}"
         json_data = json.dumps(data)
         try:
             try:
                 response = await self._session.request(
-                    method, url, data=json_data, timeout=self._REQUEST_TIMEOUT)
+                    method, url, data=json_data, timeout=self._REQUEST_TIMEOUT, headers=headers)
             except ServerDisconnectedError:
                 response = await self._session.request(
-                    method, url, data=json_data, timeout=self._REQUEST_TIMEOUT)
+                    method, url, data=json_data, timeout=self._REQUEST_TIMEOUT, headers=headers)
         except ClientConnectionError as err:
             raise Unavailable from err
         except asyncio.TimeoutError as err:
@@ -139,7 +139,7 @@ class RestLight:
         self._saturation = data["state"]["saturation"]
         self._pixel_count = data["state"]["pixels"]["count"]
         self._pixels = data["state"]["pixels"]["values"]
-        self._effects_list = data["effects"]["effectsList"]
+        self._effects_values = data["effects"]["values"]
         self._effect = data["effects"]["select"]
 
     async def set_state(
@@ -173,7 +173,7 @@ class RestLight:
             await _add_topic_to_data("hue", hue, hue_relative)
             await _add_topic_to_data("saturation", saturation, saturation_relative)
             if data:
-                await self._request("put", "state", data)
+                await self._request("put", "state", data, {'Content-Type': 'application/json'})
 
     async def _set_state(
         self,
@@ -190,7 +190,7 @@ class RestLight:
             data = {topic: {"value": value}}
         if transition is not None:
             data[topic]["duration"] = transition
-        await self._request("put", "state", data)
+        await self._request("put", "state", data, {'Content-Type': 'application/json'})
 
     async def turn_on(self) -> None:
         """Turn on the light."""
@@ -218,6 +218,6 @@ class RestLight:
 
     async def set_effect(self, effect: str) -> None:
         """Set the effect."""
-        if effect not in self.effects_list:
+        if effect not in self._effects_values:
             raise InvalidEffect
-        await self._request("put", "effects", {"select", effect})
+        await self._request("put", "effects", {"select": effect}, {'Content-Type': 'application/json'})

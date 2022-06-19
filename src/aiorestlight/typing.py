@@ -3,7 +3,6 @@ from typing import TypedDict
 class Pixel(TypedDict):
     """Pixel info"""
 
-    sequence: int
     red: int
     green: int
     blue: int
@@ -26,9 +25,9 @@ class StateData(TypedDict):
 class EffectsData(TypedDict):
     """Effects Data"""
 
+    values: list[str]
     select: str
-    effectsList: list[str]
-
+    
 class InfoData(TypedDict):
     """REST API Info"""
 
